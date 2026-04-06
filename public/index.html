@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShikshaEdge — AI Tutor</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;600&family=Noto+Sans+Devanagari:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --bg2: #1a1a1a;
+    --bg3: #242424;
+    --bg4: #2e2e2e;
+    --border: #333;
+    --text: #e8e8e8;
+    --text2: #a0a0a0;
+    --text3: #666;
+    --accent: #f97316;
+    --accent2: #ea580c;
+    --accent-dim: rgba(249,115,22,0.12);
+    --accent-glow: rgba(249,115,22,0.06);
+    --user-bg: #1e2a1a;
+    --user-border: #2d4a20;
+    --bot-bg: #1a1a1a;
+    --radius: 16px;
+    --radius-sm: 8px;
+    --font: 'Noto Sans', 'Noto Sans Devanagari', sans-serif;
+    --mono: 'Space Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    height: 100vh;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 260px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+
+  .sidebar-logo {
+    padding: 20px 18px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo-mark {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .logo-text {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+
+  .logo-sub {
+    font-size: 11px;
+    color: var(--text3);
+    padding-left: 42px;
+    font-family: var(--mono);
+    letter-spacing: 0.5px;
+  }
+
+  .new-chat-btn {
+    margin: 12px;
+    padding: 10px 14px;
+    background: var(--accent-dim);
+    border: 1px solid rgba(249,115,22,0.25);
+    border-radius: var(--radius-sm);
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.15s;
+    font-family: var(--font);
+  }
+
+  .new-chat-btn:hover {
+    background: rgba(249,115,22,0.2);
+  }
+
+  .sidebar-section {
+    padding: 8px 12px 4px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text3);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-family: var(--mono);
+  }
+
+  .chat-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 8px;
+  }
+
+  .chat-item {
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    color: var(--text2);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.1s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .chat-item:hover { background: var(--bg3); color: var(--text); }
+  .chat-item.active { background: var(--bg3); color: var(--text); }
+  .chat-item .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); flex-shrink: 0; }
+  .chat-item.active .dot { background: var(--accent); }
+
+  .sidebar-footer {
+    padding: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .lang-badges {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .lang-badge {
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    color: var(--text3);
+  }
+
+  .lang-badge.active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+  .status-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #22c55e;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .status-text { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+
+  /* MAIN CHAT */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .topbar {
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg);
+  }
+
+  .topbar-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text2);
+  }
+
+  .model-tag {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--accent-dim);
+    border: 1px solid rgba(249,115,22,0.2);
+    color: var(--accent);
+    font-family: var(--mono);
+    letter-spacing: 0.3px;
+  }
+
+  /* MESSAGES */
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .messages::-webkit-scrollbar { width: 4px; }
+  .messages::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 2px; }
+
+  /* WELCOME */
+  .welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    padding: 40px 20px;
+    text-align: center;
+  }
+
+  .welcome-icon {
+    width: 56px;
+    height: 56px;
+    background: var(--accent);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    margin-bottom: 16px;
+  }
+
+  .welcome h1 {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .welcome p {
+    font-size: 14px;
+    color: var(--text2);
+    line-height: 1.7;
+    max-width: 440px;
+    margin-bottom: 28px;
+  }
+
+  .suggestion-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    max-width: 520px;
+    width: 100%;
+  }
+
+  .suggestion {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s;
+  }
+
+  .suggestion:hover {
+    border-color: var(--accent);
+    background: var(--accent-glow);
+  }
+
+  .suggestion .s-label {
+    font-size: 11px;
+    color: var(--accent);
+    font-family: var(--mono);
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+  }
+
+  .suggestion .s-text {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.4;
+  }
+
+  /* MESSAGE ROWS */
+  .msg-row {
+    display: flex;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    animation: fadeIn 0.2s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .msg-row:last-child { border-bottom: none; }
+
+  .msg-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .msg-avatar.user {
+    background: var(--bg4);
+    color: var(--text2);
+  }
+
+  .msg-avatar.bot {
+    background: var(--accent);
+    color: white;
+  }
+
+  .msg-body { flex: 1; min-width: 0; }
+
+  .msg-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text3);
+    margin-bottom: 6px;
+    font-family: var(--mono);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .msg-name.bot-name { color: var(--accent); }
+
+  .msg-content {
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .msg-content.user-content { color: var(--text); }
+
+  .msg-content strong {
+    font-weight: 600;
+    color: white;
+  }
+
+  /* THINKING */
+  .thinking-dots {
+    display: flex;
+    gap: 4px;
+    padding: 4px 0;
+  }
+
+  .thinking-dots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text3);
+    animation: bounce 1.2s infinite;
+  }
+
+  .thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-6px); opacity: 1; }
+  }
+
+  /* INPUT AREA */
+  .input-area {
+    padding: 16px 24px 20px;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+  }
+
+  .input-box {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    padding: 10px 12px 10px 16px;
+    transition: border-color 0.15s;
+  }
+
+  .input-box:focus-within {
+    border-color: rgba(249,115,22,0.4);
+    box-shadow: 0 0 0 3px rgba(249,115,22,0.06);
+  }
+
+  #input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-size: 15px;
+    font-family: var(--font);
+    resize: none;
+    max-height: 160px;
+    line-height: 1.6;
+    padding: 4px 0;
+  }
+
+  #input::placeholder { color: var(--text3); }
+
+  .send-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--accent);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.15s;
+    color: white;
+  }
+
+  .send-btn:hover { background: var(--accent2); transform: scale(1.05); }
+  .send-btn:disabled { background: var(--bg4); cursor: not-allowed; transform: none; }
+
+  .send-btn svg { width: 16px; height: 16px; }
+
+  .input-hint {
+    font-size: 11px;
+    color: var(--text3);
+    text-align: center;
+    margin-top: 8px;
+    font-family: var(--mono);
+  }
+
+  /* SCROLLBAR */
+  .chat-list::-webkit-scrollbar { width: 3px; }
+  .chat-list::-webkit-scrollbar-thumb { background: var(--bg4); }
+
+  /* MOBILE */
+  @media (max-width: 640px) {
+    .sidebar { display: none; }
+    .messages { padding: 16px; }
+    .input-area { padding: 12px 16px 16px; }
+    .suggestion-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">
+      <div class="logo-icon">📚</div>
+      <div class="logo-text">ShikshaEdge</div>
+    </div>
+    <div class="logo-sub">AI · OFFLINE · MULTILINGUAL</div>
+  </div>
+
+  <button class="new-chat-btn" onclick="newChat()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    New conversation
+  </button>
+
+  <div class="sidebar-section">Recent</div>
+  <div class="chat-list" id="chatList">
+    <div class="chat-item active"><div class="dot"></div>Current session</div>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="status-row">
+      <div class="status-dot"></div>
+      <div class="status-text">Gemma 3 · Offline</div>
+    </div>
+    <div class="lang-badges">
+      <div class="lang-badge active">EN</div>
+      <div class="lang-badge active">हिं</div>
+      <div class="lang-badge active">मर</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">Class 6–10 · NCERT Curriculum</div>
+    <div class="model-tag">gemma3:4b · local</div>
+  </div>
+
+  <div class="messages" id="messages">
+    <!-- Welcome shown initially -->
+    <div class="welcome" id="welcome">
+      <div class="welcome-icon">📚</div>
+      <h1>ShikshaEdge</h1>
+      <p>Your personal AI tutor for Class 6–10. Ask anything from your Science or Math textbook — in Hindi, Marathi, or English. No internet needed.</p>
+      <div class="suggestion-grid">
+        <div class="suggestion" onclick="sendSuggestion('What is photosynthesis?')">
+          <div class="s-label">Science · Class 7</div>
+          <div class="s-text">What is photosynthesis?</div>
+        </div>
+        <div class="suggestion" onclick="sendSuggestion('प्रकाश संश्लेषण क्या है?')">
+          <div class="s-label">Science · Class 7 · हिंदी</div>
+          <div class="s-text">प्रकाश संश्लेषण क्या है?</div>
+        </div>
+        <div class="suggestion" onclick="sendSuggestion('Explain the Fundamental Theorem of Arithmetic')">
+          <div class="s-label">Math · Class 10</div>
+          <div class="s-text">Fundamental Theorem of Arithmetic</div>
+        </div>
+        <div class="suggestion" onclick="sendSuggestion('त्रिकोणाचे प्रकार सांगा')">
+          <div class="s-label">Math · Class 9 · मराठी</div>
+          <div class="s-text">त्रिकोणाचे प्रकार सांगा</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <div class="input-box">
+      <textarea id="input" placeholder="Ask in Hindi, Marathi, or English..." rows="1"></textarea>
+      <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="input-hint">Enter to send · Shift+Enter for new line · Works offline</div>
+  </div>
+</div>
+
+<script>
+let history = [];
+let isGenerating = false;
+
+const input = document.getElementById('input');
+const sendBtn = document.getElementById('sendBtn');
+const messages = document.getElementById('messages');
+const welcome = document.getElementById('welcome');
+
+// Auto-resize textarea
+input.addEventListener('input', () => {
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, 160) + 'px';
+});
+
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    if (!isGenerating) sendMessage();
+  }
+});
+
+function newChat() {
+  history = [];
+  const msgs = messages.querySelectorAll('.msg-row');
+  msgs.forEach(m => m.remove());
+  if (!welcome.parentElement) messages.appendChild(welcome);
+  welcome.style.display = 'flex';
+}
+
+function sendSuggestion(text) {
+  input.value = text;
+  sendMessage();
+}
+
+function hideWelcome() {
+  welcome.style.display = 'none';
+}
+
+function addMessage(content, role) {
+  hideWelcome();
+  const row = document.createElement('div');
+  row.className = 'msg-row';
+
+  const avatar = document.createElement('div');
+  avatar.className = `msg-avatar ${role}`;
+  avatar.textContent = role === 'user' ? '👤' : '📚';
+
+  const body = document.createElement('div');
+  body.className = 'msg-body';
+
+  const name = document.createElement('div');
+  name.className = `msg-name ${role === 'bot' ? 'bot-name' : ''}`;
+  name.textContent = role === 'user' ? 'You' : 'ShikshaEdge';
+
+  const msgContent = document.createElement('div');
+  msgContent.className = `msg-content ${role === 'user' ? 'user-content' : ''}`;
+  msgContent.textContent = content;
+
+  body.appendChild(name);
+  body.appendChild(msgContent);
+  row.appendChild(avatar);
+  row.appendChild(body);
+  messages.appendChild(row);
+  messages.scrollTop = messages.scrollHeight;
+
+  return msgContent;
+}
+
+function addThinking() {
+  hideWelcome();
+  const row = document.createElement('div');
+  row.className = 'msg-row';
+  row.id = 'thinking-row';
+
+  const avatar = document.createElement('div');
+  avatar.className = 'msg-avatar bot';
+  avatar.textContent = '📚';
+
+  const body = document.createElement('div');
+  body.className = 'msg-body';
+
+  const name = document.createElement('div');
+  name.className = 'msg-name bot-name';
+  name.textContent = 'ShikshaEdge';
+
+  const dots = document.createElement('div');
+  dots.className = 'thinking-dots';
+  dots.innerHTML = '<span></span><span></span><span></span>';
+
+  body.appendChild(name);
+  body.appendChild(dots);
+  row.appendChild(avatar);
+  row.appendChild(body);
+  messages.appendChild(row);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function removeThinking() {
+  const t = document.getElementById('thinking-row');
+  if (t) t.remove();
+}
+
+function renderMarkdown(text) {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>');
+}
+
+async function sendMessage() {
+  const message = input.value.trim();
+  if (!message || isGenerating) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+  isGenerating = true;
+  sendBtn.disabled = true;
+
+  addMessage(message, 'user');
+  history.push({ role: 'user', content: message });
+  addThinking();
+
+  let fullResponse = '';
+
+  try {
+    const res = await fetch('/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, history: history.slice(-8) })
+    });
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let botContent = null;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const text = decoder.decode(value);
+      const lines = text.split('\n');
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          if (data === '[DONE]') break;
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.content) {
+              if (!botContent) {
+                removeThinking();
+                botContent = addMessage('', 'bot');
+              }
+              fullResponse += parsed.content;
+              botContent.innerHTML = renderMarkdown(fullResponse);
+              messages.scrollTop = messages.scrollHeight;
+            }
+          } catch {}
+        }
+      }
+    }
+
+    if (fullResponse) {
+      history.push({ role: 'assistant', content: fullResponse });
+      // Add to sidebar
+      const chatList = document.getElementById('chatList');
+      const existing = chatList.querySelector('.chat-item.active');
+      if (existing) {
+        existing.querySelector('.dot').style.background = 'var(--accent)';
+        const preview = message.substring(0, 28) + (message.length > 28 ? '...' : '');
+        existing.innerHTML = `<div class="dot" style="background:var(--accent)"></div>${preview}`;
+      }
+    }
+
+  } catch (err) {
+    removeThinking();
+    addMessage('Connection error. Make sure the server is running.', 'bot');
+  }
+
+  isGenerating = false;
+  sendBtn.disabled = false;
+  input.focus();
+}
+</script>
+</body>
+</html>
