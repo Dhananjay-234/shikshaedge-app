@@ -3,8 +3,6 @@
 > Gemma 3, fine-tuned on NCERT curriculum, running fully offline via Ollama.  
 > One device. One school. No internet. No subscription.
 
-Built for the **Gemma 4 Good Hackathon 2026** — Future of Education track.
-
 ---
 
 ## The Problem
