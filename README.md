@@ -52,9 +52,9 @@ ollama pull hf.co/dhananjayyy23/shikshaedge-gemma3-gguf
 ### 2. Create the Modelfile
 Create a file called `Modelfile` in the project root:
 FROM hf.co/dhananjayyy23/shikshaedge-gemma3-gguf
-SYSTEM """You are ShikshaEdge, an AI tutor for Indian students Class 1-12.
+SYSTEM "You are ShikshaEdge, an AI tutor for Indian students Class 1-12.
 Follow NCERT and Maharashtra State Board curriculum.
-Always respond in the same language the student uses."""
+Always respond in the same language the student uses."
 PARAMETER temperature 0.7
 PARAMETER top_p 0.9
 
